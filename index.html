@@ -300,6 +300,9 @@
     const yarnEl = document.getElementById('yarn');
 
     const PALETTE = ['#cf1736', '#b875f3', '#f0a32b', '#f7f1ed', '#ff2fa8'];
+    const EXPERIENCE_DURATION_MS = 60000;
+    const RAIN_INTERVAL_MS = 420;
+    const MAX_PETALS = 180;
     let messageInterval = null;
     let rainInterval = null;
     let activeName = 'Amor';
@@ -393,6 +396,9 @@
     }
 
     function spawnFallingPetal(x = Math.random() * window.innerWidth, y = -20, drift = (Math.random() * 140 - 70), fast = false) {
+      if (petalRainEl.childElementCount >= MAX_PETALS) {
+        petalRainEl.firstElementChild?.remove();
+      }
       const petal = document.createElement('div');
       petal.className = 'petal';
       petal.innerHTML = petalSVG();
@@ -485,7 +491,7 @@
 
     function startRain() {
       if (rainInterval) clearInterval(rainInterval);
-      rainInterval = setInterval(() => spawnFallingPetal(), 420);
+      rainInterval = setInterval(() => spawnFallingPetal(), RAIN_INTERVAL_MS);
     }
 
     function stopRain() {
@@ -494,13 +500,12 @@
     }
 
     function runCatTimeline(onFinish) {
-      const duration = 60000;
       const trackPadding = 20;
       const catGap = 32;
       const start = performance.now();
 
       function frame(now) {
-        const progress = clamp((now - start) / duration, 0, 1);
+        const progress = clamp((now - start) / EXPERIENCE_DURATION_MS, 0, 1);
         progressFillEl.style.width = `${(progress * 100).toFixed(3)}%`;
 
         const runWidth = window.innerWidth - trackPadding * 2;
