@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jardín de Amor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-1: #040b1f;
+      --bg-2: #1a0a2d;
+      --bg-3: #020104;
+      --pink-neon: #ff3fc9;
+      --text: #f7edf8;
+      --font-romantic: 'Dancing Script', cursive;
+      --font-ui: 'Montserrat', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(170deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+      color: var(--text);
+      font-family: var(--font-ui);
+    }
+
+    .start-screen {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(2, 2, 8, 0.88);
+      z-index: 20;
+      transition: opacity 1s ease;
+    }
+
+    .start-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .start-card {
+      width: min(90vw, 460px);
+      padding: 2rem;
+      border-radius: 22px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      background: rgba(35, 15, 52, 0.55);
+      border: 1px solid rgba(255, 193, 239, 0.3);
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
+    }
+
+    .start-card h1 {
+      margin: 0 0 1rem;
+      font-size: clamp(2.2rem, 5vw, 3rem);
+      font-family: var(--font-romantic);
+    }
+
+    .start-card p {
+      margin: 0 0 1.1rem;
+      opacity: 0.9;
+    }
+
+    .start-card input {
+      width: 100%;
+      padding: 0.85rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 192, 246, 0.4);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      font: 500 1rem var(--font-ui);
+      outline: none;
+    }
+
+    .start-card input::placeholder { color: rgba(255, 228, 251, 0.6); }
+
+    .start-card button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.8rem;
+      border: 0;
+      border-radius: 999px;
+      color: white;
+      background: linear-gradient(135deg, #ff5dbf, #ff2ca8);
+      font: 600 1rem var(--font-ui);
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .start-card button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    .scene { position: relative; width: 100vw; height: 100vh; }
+
+    .message-area {
+      position: absolute;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(90vw, 880px);
+      text-align: center;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .message {
+      margin: 0;
+      font-family: var(--font-romantic);
+      font-size: clamp(2rem, 5vw, 4.2rem);
+      line-height: 1.2;
+      text-shadow: 0 0 20px rgba(255, 106, 215, 0.35);
+      opacity: 0;
+      animation: breathe 6s ease-in-out infinite;
+    }
+
+    .message.show { opacity: 1; }
+
+    .final-message {
+      font-size: clamp(2.4rem, 6.5vw, 5rem);
+      opacity: 0;
+      transition: opacity 0.9s ease;
+    }
+
+    .final-message.show { opacity: 1; }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.96); opacity: 0.4; }
+      45% { transform: scale(1.05); opacity: 1; }
+    }
+
+    .petal-rain {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .petal {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      will-change: transform, opacity;
+      opacity: 0.9;
+      animation: fall var(--fall-time) linear forwards;
+      transform: translate3d(var(--start-x), -40px, 0) rotate(0deg);
+    }
+
+    @keyframes fall {
+      0% { transform: translate3d(var(--start-x), -40px, 0) rotate(0deg); opacity: 0.9; }
+      100% { transform: translate3d(calc(var(--start-x) + var(--drift)), 105vh, 0) rotate(640deg); opacity: 0.1; }
+    }
+
+    .garden {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 34px;
+      height: 34vh;
+      min-height: 180px;
+      z-index: 9;
+      pointer-events: none;
+    }
+
+    .flower {
+      position: absolute;
+      bottom: 0;
+      width: 82px;
+      height: 170px;
+      transform-origin: center bottom;
+      transform: scaleY(0);
+      opacity: 0;
+      transition: transform 0.9s ease, opacity 0.6s ease;
+      pointer-events: auto;
+      cursor: pointer;
+      animation: sway 4.2s ease-in-out infinite;
+      animation-delay: var(--sway-delay, 0s);
+    }
+
+    .flower.grown {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+
+    .flower.glow {
+      filter: drop-shadow(0 0 16px rgba(255, 126, 225, 0.8));
+      transform: scale(1.25);
+      transition: transform 0.45s ease, filter 0.45s ease;
+    }
+
+    @keyframes sway {
+      0%, 100% { rotate: -2.5deg; }
+      50% { rotate: 2.5deg; }
+    }
+
+    .progress-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 16px;
+      height: 4px;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.18);
+      transition: opacity 0.8s ease;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff41bd, #ff77e0);
+      box-shadow: 0 0 12px rgba(255, 64, 193, 0.9);
+    }
+
+    .progress-track.done { opacity: 0; }
+
+    .runner {
+      position: absolute;
+      left: 0;
+      bottom: 22px;
+      width: 100%;
+      height: 44px;
+      z-index: 11;
+      pointer-events: none;
+    }
+
+    .cat {
+      position: absolute;
+      font-size: 2rem;
+      line-height: 1;
+      transform: translateX(0);
+      animation: walk 0.55s ease-in-out infinite;
+      filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.35));
+    }
+
+    .yarn {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(circle at 58% 38%, rgba(255, 255, 255, 0.2) 0 2px, transparent 2px 4px),
+        repeating-linear-gradient(25deg, #ff38ba 0 3px, #ff83da 3px 6px, #f91ca8 6px 9px),
+        radial-gradient(circle at 30% 28%, #ffd1f0 0 20%, #ff4ec8 55%, #dc0f83 100%);
+      box-shadow: inset -4px -5px 8px rgba(130, 0, 74, 0.38), inset 3px 3px 8px rgba(255, 255, 255, 0.45), 0 3px 7px rgba(0, 0, 0, 0.25);
+    }
+
+    @keyframes walk {
+      0%, 100% { transform: translateY(0) rotate(-3deg); }
+      50% { transform: translateY(-1px) rotate(3deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="start-screen" id="startScreen">
+    <div class="start-card">
+      <h1>Noche de Flores y Amor</h1>
+      <p>Escribe tu nombre para comenzar esta animación romántica.</p>
+      <input id="nameInput" type="text" maxlength="28" placeholder="Tu nombre" autocomplete="off" />
+      <button id="startBtn" type="button">Comenzar</button>
+    </div>
+  </div>
+
+  <main class="scene">
+    <section class="message-area">
+      <h2 id="message" class="message"></h2>
+      <h2 id="finalMessage" class="message final-message"></h2>
+    </section>
+
+    <section id="petalRain" class="petal-rain" aria-hidden="true"></section>
+    <section id="garden" class="garden" aria-label="Jardín de flores"></section>
+
+    <div id="runner" class="runner" aria-hidden="true">
+      <div id="cat" class="cat">🐈</div>
+      <div id="yarn" class="yarn"></div>
+    </div>
+
+    <div id="progressTrack" class="progress-track" aria-hidden="true">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+  </main>
+
+  <script>
+    const startScreen = document.getElementById('startScreen');
+    const nameInput = document.getElementById('nameInput');
+    const startBtn = document.getElementById('startBtn');
+    const messageEl = document.getElementById('message');
+    const finalMessageEl = document.getElementById('finalMessage');
+    const gardenEl = document.getElementById('garden');
+    const petalRainEl = document.getElementById('petalRain');
+    const progressFillEl = document.getElementById('progressFill');
+    const progressTrackEl = document.getElementById('progressTrack');
+    const catEl = document.getElementById('cat');
+    const yarnEl = document.getElementById('yarn');
+
+    const PALETTE = ['#cf1736', '#b875f3', '#f0a32b', '#f7f1ed', '#ff2fa8'];
+    let messageInterval = null;
+    let rainInterval = null;
+    let activeName = 'Amor';
+    let started = false;
+
+    const messageSets = {
+      fire: [
+        'Meraly, en tus ojos arde el incendio más hermoso.',
+        'Tu piel enciende mis noches como una llama eterna.',
+        'Meraly, cada beso tuyo es fuego que no quiero apagar.',
+        'Me pierdo en tu calor y vuelvo a nacer entre tus brazos.',
+        'Cuando me rozas, el mundo entero se vuelve chispa.',
+        'Meraly, tu amor me consume y me hace invencible.',
+        'No hay lluvia capaz de apagar esta pasión por ti.',
+        'Eres la hoguera donde mi corazón quiere vivir.',
+        'Cada latido pronuncia tu nombre con hambre de amor.',
+        'Meraly, contigo ardo feliz en el incendio del destino.'
+      ],
+      sweet: [
+        'Tu sonrisa me abraza suave como la mañana.',
+        'Eres mi rincón favorito de paz y ternura.',
+        'Tu voz convierte cualquier día en primavera.',
+        'Contigo todo se siente dulce y ligero.',
+        'Tu mirada me calma y me llena de ilusión.',
+        'Eres un suspiro bonito que me acompaña siempre.',
+        'Me haces querer el mundo con más cariño.',
+        'A tu lado, mi corazón aprende a sonreír.',
+        'Tu nombre suena a caricia en mi alma.',
+        'Si estás tú, todo es más tierno y más bello.'
+      ],
+      destiny: [
+        'Tu nombre estaba escrito en las estrellas de mi destino.',
+        'Nos encontró la noche porque ya nos esperaba el universo.',
+        'Tu alma y la mía se reconocen desde otra vida.',
+        'Somos dos rutas lejanas que el amor volvió una sola.',
+        'Cada paso me trajo hasta ti, como un poema inevitable.',
+        'En tu mirada vive el mapa exacto de mi hogar.',
+        'El tiempo se inclina cuando nuestros corazones se encuentran.',
+        'No fue casualidad: eras la promesa de mis silencios.',
+        'La luna nos nombra cuando el cielo quiere hablar de amor.',
+        'Contigo entendí que el destino también sabe besar.'
+      ],
+      romantic: [
+        'Esta noche huele a flores y a deseo de ti.',
+        'Tu presencia vuelve el aire más lento y sensual.',
+        'Quédate cerca, que mi corazón quiere confesarte todo.',
+        'Tu piel y la luna combinan perfecto en mis sueños.',
+        'Cada segundo contigo tiene sabor a romance eterno.',
+        'Tu risa me provoca un vértigo delicioso.',
+        'Déjame quererte despacio, como quien cuida un secreto.',
+        'Eres la tentación más bonita que he conocido.',
+        'Mi noche favorita es la que empieza con tu nombre.',
+        'Tus besos son la melodía que quiero repetir sin fin.'
+      ]
+    };
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function shiftHex(hex, amount) {
+      const color = hex.replace('#', '');
+      const num = parseInt(color, 16);
+      const r = clamp((num >> 16) + amount, 0, 255);
+      const g = clamp(((num >> 8) & 0xff) + amount, 0, 255);
+      const b = clamp((num & 0xff) + amount, 0, 255);
+      return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
+    }
+
+    function pickMessages(name) {
+      const clean = name.trim();
+      if (clean.toLowerCase() === 'meraly') return messageSets.fire;
+      if (clean.length <= 4) return messageSets.sweet;
+      if (clean.length >= 8) return messageSets.destiny;
+      return messageSets.romantic;
+    }
+
+    function startMessageCycle(messages) {
+      let index = 0;
+      messageEl.classList.add('show');
+      messageEl.textContent = messages[index];
+      if (messageInterval) clearInterval(messageInterval);
+      messageInterval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        messageEl.textContent = messages[index];
+      }, 6000);
+    }
+
+    function petalSVG() {
+      return '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill="#ff77d9" d="M8 1c2.7 2.1 5.2 5 5.2 8.1C13.2 12 10.8 14 8 14S2.8 12 2.8 9.1C2.8 6 5.3 3.1 8 1z"/></svg>';
+    }
+
+    function spawnFallingPetal(x = Math.random() * window.innerWidth, y = -20, drift = (Math.random() * 140 - 70), fast = false) {
+      const petal = document.createElement('div');
+      petal.className = 'petal';
+      petal.innerHTML = petalSVG();
+      petal.style.setProperty('--start-x', `${x}px`);
+      petal.style.top = `${y}px`;
+      petal.style.setProperty('--drift', `${drift}px`);
+      petal.style.setProperty('--fall-time', `${fast ? (1 + Math.random() * 1.5) : (7 + Math.random() * 6)}s`);
+      petalRainEl.appendChild(petal);
+      petal.addEventListener('animationend', () => petal.remove());
+    }
+
+    function spawnPetalBurst(x, y) {
+      for (let i = 0; i < 6; i += 1) {
+        const spread = i * (Math.PI * 2 / 6);
+        const drift = Math.cos(spread) * (60 + Math.random() * 40);
+        const top = y - 10 + Math.sin(spread) * 10;
+        spawnFallingPetal(x, top, drift, true);
+      }
+    }
+
+    function getTulipSVG(primary) {
+      const back = shiftHex(primary, -30);
+      const mid = shiftHex(primary, -10);
+      const front = shiftHex(primary, 20);
+      return `
+        <svg viewBox="0 0 90 190" xmlns="http://www.w3.org/2000/svg">
+          <path d="M43 190 C42 155 41 125 44 84 C45 72 54 72 56 84 C59 124 57 154 57 190 Z" fill="#2d7f43"/>
+          <path d="M48 112 C26 99 19 85 16 63 C34 71 43 84 49 97 Z" fill="#3a9b52"/>
+          <path d="M52 122 C74 108 83 92 84 72 C66 80 58 95 51 109 Z" fill="#38914d"/>
+          <path d="M45 72 C34 52 30 36 33 18 C43 23 47 31 49 45 C51 31 55 23 64 18 C67 36 63 52 52 72 Z" fill="${back}"/>
+          <path d="M49 74 C34 58 30 42 35 21 C45 30 48 39 49 51 C50 39 54 30 65 21 C69 42 64 58 49 74 Z" fill="${mid}"/>
+          <path d="M49 72 C41 56 39 43 41 29 C46 36 48 43 49 48 C50 43 52 36 57 29 C59 43 57 56 49 72 Z" fill="${front}"/>
+        </svg>
+      `;
+    }
+
+    function getRoseSVG(primary) {
+      const dark = shiftHex(primary, -35);
+      const mid = shiftHex(primary, -12);
+      const light = shiftHex(primary, 18);
+      return `
+        <svg viewBox="0 0 92 200" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 200 C45 167 44 134 47 100 C49 86 57 86 58 100 C61 134 59 167 58 200 Z" fill="#2f7a41"/>
+          <path d="M48 155 L57 145 L53 162 Z" fill="#3f8e4f"/>
+          <path d="M46 136 L38 126 L41 142 Z" fill="#3f8e4f"/>
+          <path d="M47 114 L56 105 L53 120 Z" fill="#3f8e4f"/>
+          <ellipse cx="48" cy="56" rx="23" ry="19" fill="${dark}"/>
+          <path d="M27 56 C30 38 43 30 58 34 C70 37 76 48 71 60 C66 72 52 78 40 76 C31 74 24 67 27 56 Z" fill="${mid}"/>
+          <path d="M34 58 C34 45 44 40 53 44 C61 48 62 59 55 65 C48 71 36 68 34 58 Z" fill="${light}"/>
+          <path d="M44 56 C45 50 50 48 54 51 C57 54 56 59 52 61 C47 63 43 60 44 56 Z" fill="${shiftHex(primary, 30)}"/>
+        </svg>
+      `;
+    }
+
+    function plantGarden() {
+      gardenEl.innerHTML = '';
+      const total = 8 + Math.floor(Math.random() * 7);
+      const flowers = [];
+
+      for (let i = 0; i < total; i += 1) {
+        const flower = document.createElement('div');
+        flower.className = 'flower';
+        flower.style.left = `${(i / (total - 1 || 1)) * 96 + 2}%`;
+        flower.style.setProperty('--sway-delay', `${Math.random() * 2}s`);
+        flower.style.width = `${74 + Math.random() * 16}px`;
+        const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+        flower.innerHTML = Math.random() > 0.5 ? getTulipSVG(color) : getRoseSVG(color);
+
+        const release = (event) => {
+          const point = event.touches ? event.touches[0] : event;
+          flower.classList.add('glow');
+          setTimeout(() => flower.classList.remove('glow'), 500);
+          spawnPetalBurst(point.clientX, point.clientY);
+        };
+
+        flower.addEventListener('click', release);
+        flower.addEventListener('touchstart', (event) => {
+          event.preventDefault();
+          release(event);
+        }, { passive: false });
+
+        flowers.push(flower);
+      }
+
+      flowers.sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left)).forEach((flower, index) => {
+        gardenEl.appendChild(flower);
+        setTimeout(() => flower.classList.add('grown'), 250 * index + 120);
+      });
+    }
+
+    function startRain() {
+      if (rainInterval) clearInterval(rainInterval);
+      rainInterval = setInterval(() => spawnFallingPetal(), 420);
+    }
+
+    function stopRain() {
+      if (rainInterval) clearInterval(rainInterval);
+      rainInterval = null;
+    }
+
+    function runCatTimeline(onFinish) {
+      const duration = 60000;
+      const trackPadding = 20;
+      const catGap = 32;
+      const start = performance.now();
+
+      function frame(now) {
+        const progress = clamp((now - start) / duration, 0, 1);
+        progressFillEl.style.width = `${(progress * 100).toFixed(3)}%`;
+
+        const runWidth = window.innerWidth - trackPadding * 2;
+        const yarnX = trackPadding + runWidth * progress;
+        const catX = clamp(yarnX - catGap, 0, window.innerWidth - 30);
+
+        yarnEl.style.left = `${yarnX}px`;
+        catEl.style.left = `${catX}px`;
+
+        if (progress < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          onFinish();
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function finishSequence() {
+      if (messageInterval) clearInterval(messageInterval);
+      messageEl.classList.remove('show');
+      messageEl.style.display = 'none';
+      stopRain();
+      progressTrackEl.classList.add('done');
+      finalMessageEl.textContent = `Te amo mucho, ${activeName} ❤️`;
+      finalMessageEl.classList.add('show');
+    }
+
+    function beginExperience() {
+      if (started) return;
+      started = true;
+      activeName = nameInput.value.trim() || 'Mi amor';
+      const messages = pickMessages(activeName);
+
+      startScreen.classList.add('hidden');
+      setTimeout(() => {
+        startScreen.style.display = 'none';
+      }, 1100);
+
+      startMessageCycle(messages);
+      plantGarden();
+      startRain();
+      runCatTimeline(finishSequence);
+    }
+
+    startBtn.addEventListener('click', beginExperience);
+    nameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') beginExperience();
+    });
+  </script>
+</body>
+</html>
