@@ -126,6 +126,7 @@
       font-size: clamp(2.4rem, 6.5vw, 5rem);
       opacity: 0;
       transition: opacity 0.9s ease;
+      animation: none;
     }
 
     .final-message.show { opacity: 1; }
@@ -262,7 +263,7 @@
     <div class="start-card">
       <h1>Noche de Flores y Amor</h1>
       <p>Escribe tu nombre para comenzar esta animación romántica.</p>
-      <input id="nameInput" type="text" maxlength="28" placeholder="Tu nombre" autocomplete="off" />
+      <input id="nameInput" type="text" maxlength="28" placeholder="Tu nombre" autocomplete="off" aria-label="Tu nombre" />
       <button id="startBtn" type="button">Comenzar</button>
     </div>
   </div>
@@ -403,7 +404,7 @@
       petal.className = 'petal';
       petal.innerHTML = petalSVG();
       petal.style.setProperty('--start-x', `${x}px`);
-      petal.style.top = `${y}px`;
+      petal.style.top = `${y + 40}px`;
       petal.style.setProperty('--drift', `${drift}px`);
       petal.style.setProperty('--fall-time', `${fast ? (1 + Math.random() * 1.5) : (7 + Math.random() * 6)}s`);
       petalRainEl.appendChild(petal);
@@ -461,6 +462,9 @@
       for (let i = 0; i < total; i += 1) {
         const flower = document.createElement('div');
         flower.className = 'flower';
+        flower.setAttribute('role', 'button');
+        flower.setAttribute('tabindex', '0');
+        flower.setAttribute('aria-label', 'Soltar pétalos');
         flower.style.left = `${(i / (total - 1 || 1)) * 96 + 2}%`;
         flower.style.setProperty('--sway-delay', `${Math.random() * 2}s`);
         flower.style.width = `${74 + Math.random() * 16}px`;
@@ -468,10 +472,13 @@
         flower.innerHTML = Math.random() > 0.5 ? getTulipSVG(color) : getRoseSVG(color);
 
         const release = (event) => {
-          const point = event.touches ? event.touches[0] : event;
+          const point = event?.touches?.[0] ?? event;
+          const flowerRect = flower.getBoundingClientRect();
+          const burstX = typeof point?.clientX === 'number' ? point.clientX : flowerRect.left + flowerRect.width / 2;
+          const burstY = typeof point?.clientY === 'number' ? point.clientY : flowerRect.top + flowerRect.height / 2;
           flower.classList.add('glow');
           setTimeout(() => flower.classList.remove('glow'), 500);
-          spawnPetalBurst(point.clientX, point.clientY);
+          spawnPetalBurst(burstX, burstY);
         };
 
         flower.addEventListener('click', release);
@@ -479,6 +486,12 @@
           event.preventDefault();
           release(event);
         }, { passive: false });
+        flower.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            release();
+          }
+        });
 
         flowers.push(flower);
       }
@@ -508,9 +521,13 @@
         const progress = clamp((now - start) / EXPERIENCE_DURATION_MS, 0, 1);
         progressFillEl.style.width = `${(progress * 100).toFixed(3)}%`;
 
-        const runWidth = window.innerWidth - trackPadding * 2;
-        const yarnX = trackPadding + runWidth * progress;
-        const catX = clamp(yarnX - catGap, 0, window.innerWidth - 30);
+        const yarnWidth = yarnEl.offsetWidth || 26;
+        const catWidth = catEl.offsetWidth || 32;
+        const runStart = trackPadding;
+        const runEnd = window.innerWidth - trackPadding - yarnWidth;
+        const runWidth = Math.max(0, runEnd - runStart);
+        const yarnX = runStart + runWidth * progress;
+        const catX = clamp(yarnX - catGap, 0, window.innerWidth - trackPadding - catWidth);
 
         yarnEl.style.left = `${yarnX}px`;
         catEl.style.left = `${catX}px`;
